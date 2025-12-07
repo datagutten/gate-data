@@ -39,7 +39,11 @@ class GateProxy:
                 save = False
 
             print('%s: Received %d bytes' % (datetime.datetime.now().isoformat(), len(data)))
-            response = self.gate.send_read(data, save)
+            try:
+                response = self.gate.send_read(data, save)
+            except TimeoutError as e:
+                print(e)
+                continue
             if command == 0x22:
                 try:
                     command, length, payload, data_format = parse_response_header(response)
