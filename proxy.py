@@ -1,0 +1,57 @@
+import datetime
+import os.path
+import socket
+import sys
+import time
+
+from gate.gate_socket import FeigGate
+from gate.request import parse_header as parse_request_header
+from gate.response import parse_header as parse_response_header
+
+
+class GateProxy:
+    connections = {}
+
+    def __init__(self, gate_ip: str):
+        print('Starting proxy for %s' % gate_ip)
+        self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listen_socket.bind(('0.0.0.0', int(os.getenv('PROXY_PORT', 10001))))
+        self.listen_socket.listen(1)
+
+        self.listen_conn, addr = self.listen_socket.accept()
+        print('Connection from', addr)
+        # print('Listening on %s %d', self.listen_socket.ad)
+        self.gate = FeigGate(gate_ip)
+
+    def __del__(self):
+        self.listen_conn.close()
+        self.listen_socket.close()
+
+    def listen(self):
+        while True:
+            data = self.listen_conn.recv(1024)
+            if not data:
+                continue
+            save = True
+            command, length, payload, data_format = parse_request_header(data)
+
+            if command == 0x22:
+                save = False
+
+            print('%s: Received %d bytes' % (datetime.datetime.now().isoformat(), len(data)))
+            response = self.gate.send_read(data, save)
+            if command == 0x22:
+                try:
+                    command, length, payload, data_format = parse_response_header(response)
+                    if length > 9:
+                        self.gate.data_folder.joinpath('buffer_%s.txt' % int(time.time())).write_bytes(response)
+                    pass
+                except Exception:
+                    pass
+
+            self.listen_conn.send(response)
+
+
+if __name__ == '__main__':
+    proxy = GateProxy(os.getenv('GATE_ADDRESS', sys.argv[1]))
+    proxy.listen()

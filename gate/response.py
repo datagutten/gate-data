@@ -1,0 +1,161 @@
+import struct
+import warnings
+
+from gate.utils import format_ip
+
+
+def parse_header(response: bytes):
+    length2 = struct.unpack('>h', response[1:3])
+    length2 = int(length2[0])
+    length4 = struct.unpack('<h', response[0:2])
+    length4 = int(length4[0])
+
+    if length4 < len(response):
+        length = length2
+        data_format = 'isostart'
+        command = response[4]
+        payload = response[5:]
+    else:
+        length = length4
+        data_format = 'rfidif'
+        command = response[2]
+        payload = response[3:]
+
+    return command, length, payload, data_format
+
+
+class FeigResponse:
+    def __init__(self, response: bytes, request: 'FeigRequest' = None):
+        self.data = response
+        self.request = request
+        self.command, self.length, self.payload, self.format = parse_header(response)
+
+        if self.length != len(response):
+            warnings.warn('Response length is %d, expected %d' % (len(response), self.length))
+
+    def get_field(self, key: bytes | int, length: int, offset=1):
+        # if hasattr(self, 'mode') and self.mode != key:
+        #     return None
+
+        pos = self.payload.find(key)
+        if pos == -1:
+            return None
+        if type(key) is bytes:
+            pos += len(key)
+        else:
+            pos += 1
+        data = self.payload[pos + offset:pos + length + offset]
+        return data
+
+    @staticmethod
+    def parse_response(response: bytes, command: int = None, request: 'FeigRequest' = None):
+        if not command:
+            command, length, payload, data_format = parse_header(response)
+
+        if command not in response_classes:
+            return FeigResponse(response, request)
+        else:
+            return response_classes[command](response, request)
+
+
+class PeopleCounterResponse(FeigResponse):
+    people_in: int
+    people_out: int
+
+    def __init__(self, response: bytes, request=None):
+        super().__init__(response, request)
+
+        if not self.request:
+            if self.format == 'isostart':
+                self.mode = self.payload[5]
+            elif self.format == 'rfidif':
+                self.mode = self.payload[3]
+            else:
+                raise RuntimeError('Unknown format %s, unable to get mode' % self.format)
+
+        else:
+            self.mode = self.request.mode
+
+        if self.mode == 0x77:
+            data_counters = self.get_field(0x77, 8, 1)
+            self.people_in, self.people_out = struct.unpack('>ii', data_counters)
+
+    pass
+
+
+class ReaderInfoResponse(FeigResponse):
+    mode: int
+
+    def __init__(self, response: bytes, request):
+        data = response
+        super().__init__(response, request)
+        if self.length < 20 and self.request is None:
+            raise RuntimeError('Request is required for partial info requests')
+        elif self.request:
+            self.mode = self.request.mode
+        else:
+            self.mode = 0xff  # All info
+
+        # fpga =
+        version_data = self.get_field(0x00, 11, 0)
+        if version_data:
+            data = struct.unpack('>bbbbbbbhh', version_data)
+            self.version = data[0:3]
+            self.hardware_type = data[3]
+            self.reader_type = data[4]
+            self.transponder_types = data[5:6]
+            self.rx_buffer = data[7]
+            self.tx_buffer = data[8]
+        peripheral_data = self.get_field(0x61, 5, 0)
+        if peripheral_data:
+            data = struct.unpack('>bbbbb', peripheral_data)
+            self.peripheral_count = data[0]
+
+        id_raw = self.get_field(b'\x00\x00\x80', 4, 0)
+        if id_raw:
+            self.id = int.from_bytes(id_raw)
+        self.mac = self.get_field(0x50, 6)
+        self.ip = format_ip(self.get_field(0x51, 4))
+        self.netmask = format_ip(self.get_field(0x52, 4))
+        self.gateway = format_ip(self.get_field(0x53, 4))
+
+    def get_field(self, key: bytes | int, length: int, offset=1):
+        if self.mode != 0xff and key != self.mode:
+            return None
+        if self.mode != 0xff:
+            key = 0x00
+
+        return super().get_field(key, length, offset)
+
+
+class ReadBuffer(FeigResponse):
+    valid: bool
+
+    def __init__(self, response: bytes, request):
+        super().__init__(response, request)
+        if self.payload[0] == 0x92:
+            self.valid = False
+            return
+        pass
+
+
+class ReaderDiagnostic(FeigResponse):
+    pass
+
+
+class ReadDataBufferInfo(FeigResponse):
+    pass
+
+
+class GetSoftwareVersion(FeigResponse):
+    pass
+
+
+response_classes = {
+    0x22: ReadBuffer,
+    0x31: ReadDataBufferInfo,
+    0x65: GetSoftwareVersion,
+    0x66: ReaderInfoResponse,
+    0x6e: ReaderDiagnostic,
+    0x9f: PeopleCounterResponse
+}
