@@ -2,6 +2,7 @@ import struct
 import warnings
 from typing import Optional
 
+from gate import utils
 from gate.utils import format_ip
 
 
@@ -58,6 +59,12 @@ class FeigResponse:
         else:
             return response_classes[command](response, request)
 
+    def dict(self) -> Optional[dict]:
+        """
+        Get object data as dict
+        """
+        raise NotImplementedError
+
 
 class PeopleCounterResponse(FeigResponse):
     people_in: int
@@ -81,7 +88,10 @@ class PeopleCounterResponse(FeigResponse):
             data_counters = self.get_field(0x77, 8, 1)
             self.people_in, self.people_out = struct.unpack('>ii', data_counters)
 
-    pass
+    def dict(self):
+        if not hasattr(self, 'people_in'):
+            return None
+        return {'in': self.people_in, 'out': self.people_out}
 
 
 class ReaderInfoResponse(FeigResponse):
@@ -115,7 +125,12 @@ class ReaderInfoResponse(FeigResponse):
         id_raw = self.get_field(b'\x00\x00\x80', 4, 0)
         if id_raw:
             self.id = int.from_bytes(id_raw)
-        self.mac = self.get_field(0x50, 6)
+
+        mac = self.get_field(0x50, 6)
+        if mac:
+            self.mac = utils.hex_string(mac, ':')
+        else:
+            self.mac = None
         self.ip = format_ip(self.get_field(0x51, 4))
         self.netmask = format_ip(self.get_field(0x52, 4))
         self.gateway = format_ip(self.get_field(0x53, 4))
@@ -127,6 +142,15 @@ class ReaderInfoResponse(FeigResponse):
             key = 0x00
 
         return super().get_field(key, length, offset)
+
+    def dict(self):
+        return {
+            # 'mac': utils.hex_string(self.mac).replace(' ', ':'),
+            'mac': self.mac,
+            'ip': self.ip,
+            'netmask': self.netmask,
+            'gateway': self.gateway,
+        }
 
 
 class ReadBuffer(FeigResponse):

@@ -1,12 +1,12 @@
-def hex_string(data: bytes):
+def hex_string(data: bytes, separator=' '):
     string = ''
     for octet in data:
         # octet = ord(octet)
         if octet <= 0x0f:
             string += '0'
         # Format as lower case hex digit without prefix
-        string += format(octet, 'x') + ' '
-    return string
+        string += format(octet, 'x') + separator
+    return string[:-1]
 
 
 def format_ip(data: bytes):
