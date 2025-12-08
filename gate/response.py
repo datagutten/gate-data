@@ -1,3 +1,4 @@
+import re
 import struct
 import warnings
 
@@ -136,7 +137,28 @@ class ReadBuffer(FeigResponse):
         if self.payload[0] == 0x92:
             self.valid = False
             return
-        pass
+        self.requested_sets, self.received_sets = struct.unpack('xBxB', self.payload[0:4])
+
+    def data_sets(self):
+        pos = 0
+        data_sets = []
+        while len(data_sets) < self.received_sets:
+            pos = self.payload.find(b'\x09\x04', pos + 1) + 2
+            data_set = b''
+
+            for block_num in range(0, 5):
+                block_start = pos + (4 * block_num)
+                block_data = self.payload[block_start:block_start + 4]
+                if True or block_num < 4:
+                    block_data = block_data[::-1]
+                data_set += block_data
+            data_sets.append(data_set)
+
+        return data_sets
+
+    @staticmethod
+    def strip_tag(data: bytes, length: int = 14) -> str:
+        return re.sub(rb'\D+', b'', data)[:length].decode()
 
 
 class ReaderDiagnostic(FeigResponse):
