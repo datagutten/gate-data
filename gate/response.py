@@ -86,7 +86,8 @@ class PeopleCounterResponse(FeigResponse):
 
         if self.mode == 0x77:
             data_counters = self.get_field(0x77, 8, 1)
-            self.people_in, self.people_out = struct.unpack('>ii', data_counters)
+            if data_counters:
+                self.people_in, self.people_out = struct.unpack('>ii', data_counters)
 
     def dict(self):
         if not hasattr(self, 'people_in'):
