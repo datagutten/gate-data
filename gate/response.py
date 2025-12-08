@@ -1,6 +1,6 @@
-import re
 import struct
 import warnings
+from typing import Optional
 
 from gate.utils import format_ip
 
@@ -130,7 +130,7 @@ class ReaderInfoResponse(FeigResponse):
 
 
 class ReadBuffer(FeigResponse):
-    valid: bool
+    valid: bool = True
 
     def __init__(self, response: bytes, request):
         super().__init__(response, request)
@@ -139,26 +139,50 @@ class ReadBuffer(FeigResponse):
             return
         self.requested_sets, self.received_sets = struct.unpack('xBxB', self.payload[0:4])
 
-    def data_sets(self):
-        pos = 0
-        data_sets = []
-        while len(data_sets) < self.received_sets:
-            pos = self.payload.find(b'\x09\x04', pos + 1) + 2
-            data_set = b''
+    def tags(self, num_blocks: int = 4) -> Optional[list[bytes]]:
+        """
+        Get RFID tags block data
+        :return: List of byte strings with tag data
+        """
+        if not self.valid:
+            return None
+        tag_start = 0
+        tags = []
+        while len(tags) < self.received_sets:
+            tag_start = self.payload.find(b'\x09', tag_start + 1) + 2
+            block_size = self.payload[tag_start - 1]  # Size of a single memory block, valid range = 01...20 (hex)
+            blocks = b''
 
-            for block_num in range(0, 5):
-                block_start = pos + (4 * block_num)
-                block_data = self.payload[block_start:block_start + 4]
-                if True or block_num < 4:
-                    block_data = block_data[::-1]
-                data_set += block_data
-            data_sets.append(data_set)
+            for block_num in range(0, num_blocks + 1):
+                block_start = tag_start + (block_size * block_num)
+                block_data = self.payload[block_start:block_start + block_size]
+                blocks += block_data[::-1]  # Reverse bytes in block
+            tags.append(blocks)
 
-        return data_sets
+        return tags
 
     @staticmethod
-    def strip_tag(data: bytes, length: int = 14) -> str:
-        return re.sub(rb'\D+', b'', data)[:length].decode()
+    def strip_tag(data: bytes) -> str:
+        """
+        Strip tags for invalid characters at start and end
+        :param data: Tag data
+        :return: Tag data stripped for invalid characters
+        """
+        output = ''
+        for byte in data:
+            if byte < 32 or byte > 126:
+                if output == '':
+                    continue  # Skip invalid characters at start
+                else:
+                    break  # Stop after first invalid character on output
+            output += chr(byte)
+
+        return output
+
+    def dict(self):
+        if not self.valid:
+            return None
+        return list(map(self.strip_tag, self.tags()))
 
 
 class ReaderDiagnostic(FeigResponse):
