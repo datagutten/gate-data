@@ -1,0 +1,18 @@
+[project]
+name = "feig-py"
+version = "0.1.0"
+description = "Get data from FEIG RFID gates"
+authors = [
+    {name = "Anders Birkenes",email = "datagutten@datagutten.net"}
+]
+requires-python = ">=3.13"
+# readme = "README.md"
+[tool.poetry]
+packages = [{ include = "gate" }]
+
+[tool.poetry.dependencies]
+prometheus-client = "^0.23.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
