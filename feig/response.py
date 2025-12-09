@@ -2,8 +2,8 @@ import struct
 import warnings
 from typing import Optional
 
-from gate import utils
-from gate.utils import format_ip
+from feig import utils
+from feig.utils import format_ip
 
 
 def parse_header(response: bytes):

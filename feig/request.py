@@ -1,4 +1,4 @@
-from gate.response import FeigResponse
+from feig.response import FeigResponse
 
 
 def parse_header(request: bytes):

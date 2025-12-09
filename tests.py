@@ -1,9 +1,9 @@
 import unittest
 from pathlib import Path
 
-from gate import FeigResponse, FeigRequest
-from gate.request import PeopleCounterRequest
-from gate.response import PeopleCounterResponse
+from feig import FeigResponse, FeigRequest
+from feig.request import PeopleCounterRequest
+from feig.response import PeopleCounterResponse
 
 test_data = Path('test_data')
 

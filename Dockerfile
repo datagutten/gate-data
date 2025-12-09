@@ -3,4 +3,4 @@ RUN pip install -U pip prometheus-client
 
 WORKDIR /app
 COPY *.py /app
-COPY gate /app/gate
+COPY feig /app/feig

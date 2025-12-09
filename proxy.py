@@ -4,9 +4,9 @@ import socket
 import sys
 import time
 
-from gate.gate_socket import FeigGate
-from gate.request import parse_header as parse_request_header
-from gate.response import parse_header as parse_response_header
+from feig.gate_socket import FeigGate
+from feig.request import parse_header as parse_request_header
+from feig.response import parse_header as parse_response_header
 
 
 class GateProxy:

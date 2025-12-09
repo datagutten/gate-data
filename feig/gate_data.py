@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Tuple, Optional
 
-from gate import FeigRequest, FeigResponse
+from feig import FeigRequest, FeigResponse
 
 
 def get_file_timestamp(file: Path) -> int:

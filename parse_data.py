@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from gate import gate_data
+from feig import gate_data
 
 output_folder = Path('parsed_data')
 data_folder = Path(sys.argv[1])

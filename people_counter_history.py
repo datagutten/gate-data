@@ -4,7 +4,7 @@ from pathlib import Path
 
 from prometheus_client.openmetrics.exposition import generate_latest
 
-from gate import FeigResponse
+from feig import FeigResponse
 from metrics import people, registry
 
 data_path = Path('data')
