@@ -8,7 +8,7 @@ authors = [
 requires-python = ">=3.13"
 # readme = "README.md"
 [tool.poetry]
-packages = [{ include = "gate" }]
+packages = [{ include = "feig" }]
 
 [tool.poetry.dependencies]
 prometheus-client = "^0.23.1"
