@@ -20,7 +20,10 @@ for gate, dates in date_files.items():
         date_folder.mkdir(parents=True, exist_ok=True)
         for file in files:
             timestamp = gate_data.get_file_timestamp(file)
-            response_obj = gate_data.get_conversation(file)
+            try:
+                response_obj = gate_data.get_conversation(file)
+            except RuntimeError:
+                continue
             if not response_obj:
                 continue
 
