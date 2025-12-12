@@ -49,8 +49,8 @@ class ReaderInfoRequest(FeigRequest):
 class PeopleCounterRequest(FeigRequest):
     def __init__(self, request: bytes):
         super().__init__(request)
-        if self.format == 'rfidif' and self.payload == b'\x00\r\x02\x06\x01w\x00\xab\xafn\xca':
-            self.mode = 0x77
+        if self.format == 'rfidif':
+            self.mode = self.payload[5]
         elif self.format in ['isostart', 'isostart_advanced']:
             self.mode = self.payload[7]
         else:
