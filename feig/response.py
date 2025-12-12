@@ -180,7 +180,7 @@ class ReadBuffer(FeigResponse):
         if self.status == 0x92:
             self.valid = False
             return
-        self.requested_sets, self.received_sets = struct.unpack('xBxB', self.payload[0:4])
+        self.requested_sets, self.received_sets = struct.unpack('BxB', self.payload[0:3])
         if self.requested_sets > self.received_sets:
             warnings.warn('Requested sets %s exceeds received sets %d' % (self.requested_sets, self.received_sets))
 
