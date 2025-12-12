@@ -57,5 +57,5 @@ class GateProxy:
 
 
 if __name__ == '__main__':
-    proxy = GateProxy(os.getenv('GATE_ADDRESS', sys.argv[1]))
+    proxy = GateProxy(sys.argv[1])
     proxy.listen()
