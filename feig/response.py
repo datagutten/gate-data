@@ -9,15 +9,14 @@ from feig.utils import format_ip
 def parse_header(response: bytes):
     length2 = struct.unpack('>h', response[1:3])
     length2 = int(length2[0])
-    length4 = struct.unpack('<h', response[0:2])
-    length4 = int(length4[0])
+    length4 = response[0]
 
-    if length4 < len(response):
+    if length4 < len(response):  # Advanced
         length = length2
         data_format = 'isostart'
         command = response[4]
         payload = response[5:]
-    else:
+    else:  # Simple
         length = length4
         data_format = 'rfidif'
         command = response[2]
@@ -28,9 +27,23 @@ def parse_header(response: bytes):
 
 class FeigResponse:
     def __init__(self, response: bytes, request: 'FeigRequest' = None):
+        # https://github.com/Amarok79/InlayTester.Drivers.FeigReader/blob/main/src/InlayTester.Drivers.FeigReader/Drivers.Feig/FeigResponse.cs
         self.data = response
         self.request = request
         self.command, self.length, self.payload, self.format = parse_header(response)
+        if self.format == 'rfidif':
+            self.address = self.data[1]
+            self.status = self.data[3]
+            self.payload2 = self.data[4:self.length - 6]
+        else:
+            self.address = self.data[3]
+            self.status = self.data[5]
+            self.payload2 = self.data[6:self.length - 8]
+
+        crc_low = self.data[self.length - 2]
+        crc_high = self.data[self.length - 1]
+
+        self.crc = (crc_high << 8) | crc_low
 
         if self.length != len(response):
             warnings.warn('Response length is %d, expected %d' % (len(response), self.length))
@@ -159,6 +172,7 @@ class ReadBuffer(FeigResponse):
 
     def __init__(self, response: bytes, request):
         super().__init__(response, request)
+        self.payload = self.payload2
         if self.payload[0] == 0x92:
             self.valid = False
             return
