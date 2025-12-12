@@ -23,7 +23,6 @@ services:
       - ./parsed_data:/app/parsed_data
 
   prometheus:
-    container_name: prometheus
     image: prom/prometheus
     restart: unless-stopped
 
@@ -40,6 +39,15 @@ services:
       - prometheus:/prometheus
     environment:
       - TZ=Europe/Oslo
+
+  people_count_openmetrics:
+    <<: *base
+    command: python people_count_openmetrics.py
+    environment:
+      METRICS_FOLDER: /app/metrics/people_count
+    volumes:
+      - ./parsed_data:/app/parsed_data
+      - prometheus:/app/metrics
 
 volumes:
   prometheus:
