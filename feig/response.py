@@ -32,10 +32,14 @@ class FeigResponse:
         self.request = request
         self.command, self.length, self.payload, self.format = parse_header(response)
         if self.format == 'rfidif':
+            if len(self.data) < 6:
+                raise RuntimeError('More data needed')
             self.address = self.data[1]
             self.status = self.data[3]
             self.payload2 = self.data[4:self.length - 6]
         else:
+            if len(self.data) < 8:
+                raise RuntimeError('More data needed')
             self.address = self.data[3]
             self.status = self.data[5]
             self.payload2 = self.data[6:self.length - 8]
@@ -177,6 +181,8 @@ class ReadBuffer(FeigResponse):
             self.valid = False
             return
         self.requested_sets, self.received_sets = struct.unpack('xBxB', self.payload[0:4])
+        if self.requested_sets > self.received_sets:
+            warnings.warn('Requested sets %s exceeds received sets %d' % (self.requested_sets, self.received_sets))
 
     def tags(self, num_blocks: int = 4) -> Optional[list[bytes]]:
         """
