@@ -177,7 +177,7 @@ class ReadBuffer(FeigResponse):
     def __init__(self, response: bytes, request):
         super().__init__(response, request)
         self.payload = self.payload2
-        if self.payload[0] == 0x92:
+        if self.status == 0x92:
             self.valid = False
             return
         self.requested_sets, self.received_sets = struct.unpack('xBxB', self.payload[0:4])
