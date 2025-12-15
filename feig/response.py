@@ -44,6 +44,7 @@ class FeigResponse:
             self.status = self.data[5]
             self.payload2 = self.data[6:self.length - 8]
 
+        self.success = self.status == 0
         crc_low = self.data[self.length - 2]
         crc_high = self.data[self.length - 1]
 
