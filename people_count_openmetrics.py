@@ -5,7 +5,7 @@ from pathlib import Path
 
 from prometheus_client import generate_latest
 
-from metrics import people, registry
+from metrics import GateMetrics
 
 output_folder = Path(os.getenv('METRICS_FOLDER'))
 output_folder.mkdir(parents=True, exist_ok=True)
@@ -15,6 +15,7 @@ path = Path('parsed_data')
 for gate in path.iterdir():
     if not gate.is_dir():
         continue
+    metrics_obj = GateMetrics()
 
     for date in gate.iterdir():
         if not date.is_dir():
@@ -29,14 +30,14 @@ for gate in path.iterdir():
 
             for timestamp, tags in data.items():
                 date_obj = datetime.fromtimestamp(int(timestamp))
-                people.labels('in', gate.name, 1).set(tags['in'])
-                people.labels('out', gate.name, 1).set(tags['out'])
+                metrics_obj.people.labels('in', gate.name, 1).set(tags['in'])
+                metrics_obj.people.labels('out', gate.name, 1).set(tags['out'])
 
-                data = generate_latest(registry)
+                data = generate_latest(metrics_obj.registry)
                 if lines is None:
                     lines = data.splitlines()[0:2]
                 else:
-                    lines_temp = data.splitlines()[2:-1]
+                    lines_temp = data.splitlines()[2:]
                     for line in lines_temp:
                         lines.append(b'%s %s' % (line, str(timestamp).encode()))
 
