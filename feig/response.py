@@ -197,16 +197,28 @@ class ReadBuffer(FeigResponse):
             self.received_sets = 1
 
         tags = []
+        uids = []
         while len(tags) < self.received_sets:
-            tag_start = self.payload.find(b'\x09', tag_start + 1) + 2
-            block_size = self.payload[tag_start - 1]  # Size of a single memory block, valid range = 01...20 (hex)
+            uid, unknown1, num_blocks, block_size = struct.unpack('8scBB', self.payload[tag_start:tag_start + 11])
+            if uid[0] != 0xe0:  # https://en.wikipedia.org/wiki/ISO/IEC_15693#Implementations
+                raise RuntimeError('The first byte of the UID is not 0xE0')
+            if block_size not in range(0x01, 0x20):  # Size of a single memory block, valid range = 01...20 (hex)
+                raise RuntimeError('Invalid block size')
+            uids.append(uid)
+
+            block_start = tag_start + 11
+            blocks_raw = self.payload[block_start:block_start + (block_size * num_blocks)]
+
             blocks = b''
 
-            for block_num in range(0, num_blocks + 1):
-                block_start = tag_start + (block_size * block_num)
-                block_data = self.payload[block_start:block_start + block_size]
+            for pos in range(0, len(blocks_raw), block_size):
+                block_data = blocks_raw[pos:pos + block_size]
                 blocks += block_data[::-1]  # Reverse bytes in block
             tags.append(blocks)
+            tag_end = tag_start + (block_size * num_blocks)
+            tag_start = self.payload.find(b'\xe0', tag_end)  # Tag starts with uid
+            if not tag_start:
+                break
 
         return tags
 
