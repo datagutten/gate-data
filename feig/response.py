@@ -192,7 +192,10 @@ class ReadBuffer(FeigResponse):
         """
         if not self.valid:
             return None
-        tag_start = 0
+        tag_start = self.payload.find(b'\xe0')
+        if tag_start and self.received_sets == 0:
+            self.received_sets = 1
+
         tags = []
         while len(tags) < self.received_sets:
             tag_start = self.payload.find(b'\x09', tag_start + 1) + 2
