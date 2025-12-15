@@ -17,6 +17,7 @@ services:
 
   parse_data:
     <<: *base
+    restart: no
     command: python parse_data.py data
     volumes:
       - ./data:/app/data
@@ -42,6 +43,7 @@ services:
 
   people_count_openmetrics:
     <<: *base
+    restart: no
     command: python people_count_openmetrics.py
     environment:
       METRICS_FOLDER: /app/metrics/people_count
