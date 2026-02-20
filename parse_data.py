@@ -41,6 +41,9 @@ for gate, dates in date_files.items():
                     output[name][timestamp] = data
             except NotImplementedError:
                 continue
+            except RuntimeError as e:
+                print(e)
+                continue
 
         for class_name, values in output.items():
             if not values:
