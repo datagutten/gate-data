@@ -14,6 +14,7 @@ data_folder = Path(sys.argv[1])
 date_files = gate_data.sort_files(data_folder)
 for gate, dates in date_files.items():
     for date, files in dates.items():
+        print(gate, date)
         output = {}
 
         date_folder = output_folder.joinpath(gate, date.isoformat())
