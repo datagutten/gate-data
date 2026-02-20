@@ -14,6 +14,11 @@ services:
       - "${PROXY2}:10001:10001"
     command: python proxy.py ${GATE2}
 
+  http-api:
+    <<: *base
+    ports:
+      - "5000:5000"
+    command: python -m feig.http_api
 
   parse_data:
     <<: *base
