@@ -22,7 +22,11 @@ for gate, dates in date_files.items():
             timestamp = gate_data.get_file_timestamp(file)
             try:
                 response_obj = gate_data.get_conversation(file)
-            except RuntimeError:
+            except RuntimeError as e:
+                print(e)
+                continue
+            except IndexError as e:
+                print(e)
                 continue
             if not response_obj:
                 continue
