@@ -53,6 +53,9 @@ class FeigResponse:
         if self.length != len(response):
             warnings.warn('Response length is %d, expected %d' % (len(response), self.length))
 
+    def base64(self):
+        return base64.b64encode(self.data).decode()
+
     def get_field(self, key: bytes | int, length: int, offset=1):
         # if hasattr(self, 'mode') and self.mode != key:
         #     return None
