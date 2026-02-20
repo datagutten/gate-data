@@ -27,6 +27,9 @@ class GateProxy:
         self.listen_conn.close()
         self.listen_socket.close()
 
+    def _request(self, data, save):
+        return self.gate.send_read(data, save)
+
     def listen(self):
         while True:
             data = self.listen_conn.recv(1024)
@@ -40,7 +43,7 @@ class GateProxy:
 
             print('%s: Received %d bytes' % (datetime.datetime.now().isoformat(), len(data)))
             try:
-                response = self.gate.send_read(data, save)
+                response = self._request(data, save)
             except TimeoutError as e:
                 print(e)
                 continue
