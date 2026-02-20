@@ -29,6 +29,8 @@ def parse_header(response: bytes):
 class FeigResponse:
     def __init__(self, response: bytes, request: 'FeigRequest' = None):
         # https://github.com/Amarok79/InlayTester.Drivers.FeigReader/blob/main/src/InlayTester.Drivers.FeigReader/Drivers.Feig/FeigResponse.cs
+        if response == b'':
+            raise RuntimeError('Empty response')
         self.data = response
         self.request = request
         self.command, self.length, self.payload, self.format = parse_header(response)
@@ -203,7 +205,11 @@ class ReadBuffer(FeigResponse):
         tags = []
         uids = []
         while len(tags) < self.received_sets:
-            uid, unknown1, num_blocks, block_size = struct.unpack('8scBB', self.payload[tag_start:tag_start + 11])
+            try:
+                uid, unknown1, num_blocks, block_size = struct.unpack('8scBB', self.payload[tag_start:tag_start + 11])
+            except struct.error as e:
+                raise RuntimeError from e
+
             if uid[0] != 0xe0:  # https://en.wikipedia.org/wiki/ISO/IEC_15693#Implementations
                 raise RuntimeError('The first byte of the UID is not 0xE0')
             if block_size not in range(0x01, 0x20):  # Size of a single memory block, valid range = 01...20 (hex)
