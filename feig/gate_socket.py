@@ -56,3 +56,7 @@ class FeigGate:
     def people_count(self) -> feig_response.PeopleCounterResponse:
         query = b'\x02\x00\x12\xFF\x9F\x00\x0D\x02\x02\x00\x08\x01\x77\x00\xEE\x02\x44\x31'
         return self.request(query, save=False)
+
+    def read_buffer(self) -> feig_response.ReadBuffer:
+        query = b'\x02\x00\x09\xFF\x22\x00\xFF\x79\x69'
+        return self.request(query)
