@@ -38,6 +38,14 @@ class FeigRequest:
         return FeigResponse.parse_response(response, self.command, self)
 
 
+class ReadBufferRequest(FeigRequest):
+    pass
+
+
+class ClearBufferRequest(FeigRequest):
+    pass
+
+
 class ReaderInfoRequest(FeigRequest):
     mode: int
 
@@ -59,6 +67,8 @@ class PeopleCounterRequest(FeigRequest):
 
 
 request_classes = {
+    0x22: ReadBufferRequest,
+    0x32: ClearBufferRequest,
     0x66: ReaderInfoRequest,
     0x9f: PeopleCounterRequest,
 }

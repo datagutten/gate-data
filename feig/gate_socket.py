@@ -60,3 +60,7 @@ class FeigGate:
     def read_buffer(self) -> feig_response.ReadBuffer:
         query = b'\x02\x00\x09\xFF\x22\x00\xFF\x79\x69'
         return self.request(query)
+
+    def clear_buffer(self):
+        query = b'\x02\x00\x07\xFF\x32\x54\x47'
+        return self.request(query, save=False)

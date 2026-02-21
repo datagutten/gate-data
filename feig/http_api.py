@@ -84,6 +84,13 @@ def buffer():
     }
 
 
+@app.route('/buffer_clear')
+def buffer_clear():
+    gate_obj = get_connection()
+    response = gate_obj.clear_buffer()
+    return {'raw': response.base64(), 'success': response.success}
+
+
 @app.route('/raw', methods=["POST"])
 def raw():
     gate_obj = get_connection()
