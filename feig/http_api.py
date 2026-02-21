@@ -26,8 +26,11 @@ def get_connection(gate_id=None):
     if gate_id is None:
         gate_id = flask.request.args.get('gate')
     if gate_id not in connections:
-        gate_obj = FeigGate(gate_id)
-        connections[gate_id] = gate_obj
+        try:
+            gate_obj = FeigGate(gate_id)
+            connections[gate_id] = gate_obj
+        except ConnectionError as e:
+            raise RuntimeError from e
     else:
         gate_obj = connections[gate_id]
 
