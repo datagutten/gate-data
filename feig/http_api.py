@@ -63,9 +63,9 @@ def buffer():
 
     if not buffer_data.success:
         return {'raw': buffer_data.base64()}
-    tags = buffer_data.tags()
+
     return {
-        'tags': tags,
+        'tags': buffer_data.dict(),
         'raw': buffer_data.base64()
     }
 
