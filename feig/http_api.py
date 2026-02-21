@@ -1,11 +1,25 @@
 import flask
-from flask import Flask
+from flask import Flask, jsonify
 
 from .gate_socket import FeigGate
 
 app = Flask(__name__)
 
 connections = {}
+
+
+@app.errorhandler(RuntimeError)
+def handle_exception(error):
+    response = jsonify({'error': str(error)})
+    response.status_code = 500
+    return response
+
+
+@app.errorhandler(TimeoutError)
+def handle_timeout_exception(error):
+    response = jsonify({'error': 'Timeout'})
+    response.status_code = 500
+    return response
 
 
 def get_connection(gate_id=None):
